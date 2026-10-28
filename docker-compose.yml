@@ -7,7 +7,7 @@ services:
     ports:
       - "555"
     env_file:
-      - .env
+      - backend/.env
     depends_on:
       mongodb:
         condition: service_healthy
@@ -21,7 +21,7 @@ services:
     ports:
       - "3000"
     env_file:
-      - .env
+      - frontend/.env
     depends_on:
       mongodb:
         condition: service_healthy
