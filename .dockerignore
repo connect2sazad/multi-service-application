@@ -1,0 +1,14 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Git
+.git
+
+# Logs
+npm-debug.log
+
+# Environment setup script
+make_env.sh
+
+.env.*

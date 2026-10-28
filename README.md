@@ -1,93 +1,214 @@
-# Multi Service Application
 
+# Blue-Green Deployment
 
+Project: https://roadmap.sh/projects/blue-green-deployment
 
-## Getting started
+This project demonstrates how to implement a **blue-green deployment strategy** for a simple web application. It allows you to deploy new versions with minimal downtime, improve deployment reliability, and automatically roll back to the previous version if a deployment fails.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+The project uses **AWS EC2, Docker, Docker Compose, and GitLab CI/CD** to automate the deployment process.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Prerequisites
 
-## Add your files
+Before getting started, make sure you have:
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+- An AWS account.
+- An EC2 instance with SSH access.
+- Docker and Docker Compose installed on your EC2 instance.
+- A GitLab account and access to the project repository.
+- Basic knowledge of Git, Docker, and SSH.
 
+If you need help creating an EC2 instance and connecting to it via SSH from your local terminal, check out my [YouTube playlist](https://www.youtube.com/playlist?list=PLP-z5YySqpBA).
+
+## Initial Deployment
+
+Follow these steps to deploy the application on your EC2 instance for the first time.
+
+### 1. Connect to Your EC2 Instance
+
+Connect to your EC2 instance using SSH and your private key:
+
+```bash
+ssh -i /path/to/your-private-key.pem \
+  <EC2_USER>@<EC2_PUBLIC_IP>
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/connect2sazad/multi-service-application.git
-git branch -M main
-git push -uf origin main
+
+Replace `/path/to/your-private-key.pem`, `<EC2_USER>`, and `<EC2_PUBLIC_IP>` with your actual values.
+
+On your first connection, SSH may ask you to verify the server's host fingerprint. Confirm it only after verifying that it belongs to your EC2 instance.
+
+### 2. Install Docker
+
+Install Docker and the Docker Compose plugin on your EC2 instance if they are not already installed.
+
+Verify the installation:
+
+```bash
+docker --version
+docker compose version
 ```
 
-## Integrate with your tools
+### 3. Clone the Repository
 
-* [Set up project integrations](https://gitlab.com/connect2sazad/multi-service-application/-/settings/integrations)
+Clone the project repository and navigate to the project directory:
 
-## Collaborate with your team
+```bash
+git clone https://gitlab.com/connect2sazad/blue-green-deployment.git
+cd blue-green-deployment
+```
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### 4. Configure the Environment
 
-## Test and Deploy
+Make the environment setup script executable and run it:
 
-Use the built-in continuous integration in GitLab.
+```bash
+chmod +x make_env.bash
+./make_env.bash
+```
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+Follow any prompts provided by the script to complete the configuration.
 
-***
+### 5. Start the Application
 
-# Editing this README
+Start the application and its associated services in detached mode:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```bash
+docker compose up -d
+```
 
-## Suggestions for a good README
+Verify that the containers are running:
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```bash
+docker compose ps
+```
 
-## Name
-Choose a self-explaining name for your project.
+Your initial deployment is now complete.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## Configure GitLab CI/CD
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+GitLab CI/CD automates the deployment process whenever you push code to the repository. The pipeline uses SSH to connect to your EC2 instance and execute the deployment workflow.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### 1. Fork or Copy the Repository
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Fork the project repository, or clone it and push the code to a new GitLab repository that you own.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### 2. Configure CI/CD Variables
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+In your GitLab project, navigate to:
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+**Settings → CI/CD → Variables**
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Add the following variables:
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+| Variable | Type | Description |
+|---|---|---|
+| `EC2_HOST` | Variable | Public IP address or hostname of your EC2 instance. |
+| `EC2_KNOWN_HOSTS` | File | SSH host key entries for your EC2 instance. |
+| `EC2_SSH_PRIVATE_KEY` | File | Private SSH key used to connect to your EC2 instance. |
+| `EC2_USER` | Variable | SSH username for your EC2 instance. |
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+#### Generate the SSH Host Keys
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Run the following command on your local machine to retrieve the EC2 instance's SSH host key:
 
-## License
-For open source projects, say how it is licensed.
+```bash
+ssh-keyscan -H <EC2_PUBLIC_IP>
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Add the output to the `EC2_KNOWN_HOSTS` CI/CD variable.
+
+**Security note:** For production environments, verify the host key's fingerprint through a trusted source before adding it. Do not rely on an unverified `ssh-keyscan` result alone.
+
+#### Configure the Private Key
+
+Add the contents of your EC2 private key file to `EC2_SSH_PRIVATE_KEY`.
+
+For example, the file may be named `your-key.pem`. Copy its complete contents, including the `BEGIN` and `END` lines.
+
+Keep private keys secret. Never commit them to your repository or expose them in pipeline logs.
+
+For sensitive variables, enable the appropriate masking and protection options supported by GitLab. If you use a file-type variable, ensure the pipeline reads the key from the file path provided by GitLab.
+
+### 3. Configure the GitLab Runner
+
+The project uses GitLab CI/CD to run the deployment pipeline.
+
+If you use a self-hosted GitLab Runner, update the `tags` section in `.gitlab-ci.yml` to match the tags configured for your runner.
+
+For example:
+
+```yaml
+tags:
+  - your-runner-tag
+```
+
+Make sure the runner is online and configured to execute the project's pipeline jobs.
+
+### 4. Trigger a Deployment
+
+Once the CI/CD variables and runner are configured, push your changes to the repository:
+
+```bash
+git add .
+git commit -m "Update application"
+git push origin main
+```
+
+Replace `main` with your deployment branch if necessary.
+
+You can monitor the pipeline in **Build → Pipelines** in your GitLab project.
+
+## How Blue-Green Deployment Works
+
+The deployment workflow uses two application environments:
+
+- **Blue:** The currently active application version.
+- **Green:** The environment used to deploy and validate the new version.
+
+When a new version is pushed to the repository, the deployment pipeline builds or retrieves the updated application image and deploys it to the inactive environment.
+
+The workflow then switches traffic to the new version after a successful deployment.
+
+If the deployment or validation fails, the workflow attempts to restore the previous working version.
+
+This approach helps minimize downtime and reduces the risk associated with deploying new application versions.
+
+## Verify the Deployment
+
+After a successful pipeline run, verify that the application is accessible through your EC2 instance's public IP address or configured domain.
+
+You can also inspect the running containers on the instance:
+
+```bash
+docker compose ps
+docker compose logs
+```
+
+If the application is not accessible, check the container logs, security group rules, application ports, and deployment pipeline logs.
+
+## Troubleshooting
+
+### SSH Connection Issues
+
+- Verify that `EC2_HOST` and `EC2_USER` are correct.
+- Ensure the EC2 security group allows SSH access on port `22` from the runner's IP address.
+- Check that the private key is configured correctly.
+- Verify the host keys stored in `EC2_KNOWN_HOSTS`.
+
+### Docker Issues
+
+- Confirm that Docker is installed and running.
+- Check the container status with `docker compose ps`.
+- Review application logs with `docker compose logs`.
+
+### Pipeline Failures
+
+- Review the failed job logs in GitLab.
+- Verify that all required CI/CD variables are configured.
+- Ensure your GitLab Runner is online and has the correct tags.
+- Check that the deployment scripts handle errors and rollback as expected.
+
+## Conclusion
+
+This project demonstrates how to implement a blue-green deployment workflow using AWS EC2, Docker, and GitLab CI/CD.
+
+By automating deployments, validating new application versions, and providing a rollback mechanism, the workflow helps make application releases more reliable and easier to manage.
