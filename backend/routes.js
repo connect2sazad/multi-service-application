@@ -70,19 +70,31 @@ router.get('/todos', async (req, res, next) => {
     }
 });
 
-
-// get all todos
-router.get('/todos', async (req, res, next) => {
+// create a todo
+router.post('/todos', async (req, res, next) => {
     try {
         const todos = await conn;
-        const result = await todos.find({}).toArray();
 
-        res.status(200).json({
-            message: 'todos fetched successfully',
-            data: result,
+        const newTodo = req.body;
+
+        const result = await todos.insertOne(newTodo);
+
+        const createdTodo = await todos.findOne({
+            _id: result.insertedId,
+        });
+
+        // Invalidate Redis cache
+        await redis.del('todos:all');
+
+        return res.status(201).json({
+            message: 'Todo created successfully',
+            data: createdTodo,
         });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch todos', details: error.message });
+        return res.status(500).json({
+            error: 'Failed to create Todo',
+            details: error.message,
+        });
     }
 });
 
