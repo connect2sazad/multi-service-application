@@ -14,7 +14,7 @@ RUN npm run build
 # Stage 2: Serve compiled files
 FROM nginx:alpine
 
-COPY --from=build /front/build /usr/share/nginx/html
+COPY --from=build /frontend/build /usr/share/nginx/html
 
 EXPOSE 80
 

@@ -4,7 +4,7 @@ set -euo pipefail
 
 if [ ! -f .env ]; then
     if [ ! -f .env.example ]; then
-        echo "Error: backend/.env.example not found!"
+        echo "Error: .env.example not found!"
         exit 1
     fi
 
@@ -12,7 +12,7 @@ if [ ! -f .env ]; then
     MONGO_PASS="$(openssl rand -hex 24)"
     DB_NAME="multi-service-application"
     
-    cp .env.example .env
+    cp backend/.env.example .env
     
     sed -i "s|^MONGO_INITDB_ROOT_USERNAME=.*|MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}|" .env
     sed -i "s|^MONGO_INITDB_ROOT_PASSWORD=.*|MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASS}|" .env
@@ -20,9 +20,9 @@ if [ ! -f .env ]; then
 
     chmod 600 .env    
     
-    echo "backend/.env generated from backend/.env.example"
+    echo ".env generated from .env.example"
 
 else 
-    echo "backend/.env already exists; keeping existing configuration."
+    echo ".env already exists; keeping existing configuration."
 fi
 
