@@ -1,3 +1,4 @@
+
 from pathlib import Path
 import sys
 import secrets
@@ -6,11 +7,16 @@ ROOT_ENV = Path(".env")
 BACKEND_ENV = Path("backend/.env")
 FRONTEND_ENV = Path("frontend/.env")
 
-MONGO_USER = "appadmin"
-DB_NAME = "multi-service-application"
+SECRETS_DIR = Path("secrets")
+MONGO_USERNAME_FILE = SECRETS_DIR / "mongo_root_username.txt"
+MONGO_PASSWORD_FILE = SECRETS_DIR / "mongo_root_password.txt"
+
+DEFAULT_MONGO_USER = "appadmin"
+DEFAULT_DB_NAME = "multi-service-application"
+
 
 def read_env(path):
-    """Read KEY=VALUE from existing env file"""
+    """Read KEY=VALUE entries from an existing env file."""
     values = {}
 
     if not path.exists():
@@ -25,67 +31,87 @@ def read_env(path):
 
     return values
 
-def prepare_configs():
-    """Generate all config using same creds"""
 
-    existing = read_env(ROOT_ENV)
+def read_secret(path):
+    """Read an existing secret without its trailing newline."""
+    if not path.exists():
+        return None
 
-    mongo_user = existing.get(
-        "MONGO_INITDB_ROOT_USERNAME", MONGO_USER
-    )
+    value = path.read_text(encoding="utf-8").strip()
+    return value or None
 
-    mongo_pass = existing.get(
-        "MONGO_INITDB_ROOT_PASSWORD"
-    )
 
-    db_name = existing.get(
-        "DB_NAME", DB_NAME
-    )
+def write_private_file(path, content):
+    """Create a private secret file without overwriting existing secrets."""
+    path.parent.mkdir(parents=True, exist_ok=True)
 
-    if not mongo_pass:
-        mongo_pass = secrets.token_hex(24)
+    if path.exists():
+        path.chmod(0o600)
+        print(f"Keeping existing secret: {path}")
+        return
 
-    root_config = (
-        f"MONGO_INITDB_ROOT_USERNAME={mongo_user}\n"
-        f"MONGO_INITDB_ROOT_PASSWORD={mongo_pass}\n"
-        f"DB_NAME={db_name}\n"
-    )
+    path.write_text(content.rstrip("\n") + "\n", encoding="utf-8")
+    path.chmod(0o600)
+    print(f"Created secret: {path}")
 
-    backend_config = (
-        f"MONGO_INITDB_ROOT_USERNAME={mongo_user}\n"
-        f"MONGO_INITDB_ROOT_PASSWORD={mongo_pass}\n"
-        f"MONGODB_URI=mongodb://{mongo_user}:{mongo_pass}"
-        f"@mongodb:27017/{db_name}?authSource=admin\n"
-        "PORT=555\n"
-        "REDIS_URI=redis://redis:6379\n"
-    )
 
-    frontend_config = (
-        # "REACT_APP_API_URL=http://backend:555\n"
-        "REACT_APP_API_URL=/api\n"
-    )
+def write_config_file(path, content):
+    """Create or update a non-secret configuration file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    content = content.rstrip("\n") + "\n"
 
-    return {
-        ROOT_ENV: root_config,
-        BACKEND_ENV: backend_config,
-        FRONTEND_ENV: frontend_config
-    }
+    if path.exists() and path.read_text(encoding="utf-8") == content:
+        path.chmod(0o600)
+        print(f"Configuration unchanged: {path}")
+        return
+
+    path.write_text(content, encoding="utf-8")
+    path.chmod(0o600)
+    print(f"Updated configuration: {path}")
+
 
 def create_env():
-    """Create .env files"""
-    configs = prepare_configs()
+    """Create secret files and non-secret environment configuration."""
+    existing = read_env(ROOT_ENV)
 
-    for env_file in configs:
-        env_file.parent.mkdir(parents=True, exist_ok=True)
+    mongo_user = (
+        read_secret(MONGO_USERNAME_FILE)
+        or existing.get("MONGO_INITDB_ROOT_USERNAME")
+        or DEFAULT_MONGO_USER
+    )
 
-    for env_file, content in configs.items():
-        if env_file.exists():
-            print(f"Keeping existing file: {env_file}")
-            continue
+    mongo_password = (
+        read_secret(MONGO_PASSWORD_FILE)
+        or existing.get("MONGO_INITDB_ROOT_PASSWORD")
+        or secrets.token_hex(24)
+    )
 
-        env_file.write_text(content, encoding="utf-8")
-        env_file.chmod(0o600)
-        print(f"Created: {env_file}")
+    db_name = existing.get("DB_NAME", DEFAULT_DB_NAME)
+
+    # Create secrets first. Never overwrite existing secret files.
+    write_private_file(MONGO_USERNAME_FILE, mongo_user)
+    write_private_file(MONGO_PASSWORD_FILE, mongo_password)
+
+    # Write only non-secret configuration to .env files.
+    write_config_file(
+        ROOT_ENV,
+        f"DB_NAME={db_name}",
+    )
+
+    write_config_file(
+        BACKEND_ENV,
+        "PORT=555\n"
+        f"DB_NAME={db_name}\n"
+        "REDIS_URI=redis://redis:6379\n",
+    )
+
+    write_config_file(
+        FRONTEND_ENV,
+        "REACT_APP_API_URL=/api",
+    )
+
+    print("Configuration files are ready!")
+
 
 if __name__ == "__main__":
     try:

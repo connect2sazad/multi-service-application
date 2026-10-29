@@ -10,6 +10,13 @@ services:
       - "555:555"
     env_file:
       - backend/.env
+    environment:
+      DB_NAME: ${DB_NAME:-multi-service-application}
+      MONGODB_USERNAME_FILE: /run/secrets/mongo_root_username
+      MONGODB_PASSWORD_FILE: /run/secrets/mongo_root_password
+    secrets:
+      - mongo_root_username
+      - mongo_root_password
     depends_on:
       mongodb:
         condition: service_healthy
@@ -26,6 +33,8 @@ services:
       retries: 5
       start_period: 15s
     restart: unless-stopped
+    networks:
+      - todos-network
 
   frontend:
     build:
@@ -46,6 +55,8 @@ services:
       retries: 5
       start_period: 15s
     restart: unless-stopped
+    networks:
+      - todos-network
 
   nginx:
     image: nginx:alpine
@@ -60,6 +71,8 @@ services:
       frontend:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - todos-network
 
   redis:
     image: redis:7-alpine
@@ -73,13 +86,18 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
+    networks:
+      - todos-network
 
   mongodb:
     image: mongo:7
     container_name: todos-db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo_root_username
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+    secrets:
+      - mongo_root_username
+      - mongo_root_password
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -100,7 +118,19 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    networks:
+      - todos-network
 
 volumes:
   mongo_data:
   redis_data:
+
+networks:
+  todos-network:
+    driver: bridge
+
+secrets:
+  mongo_root_username:
+    file: ./secrets/mongo_root_username.txt
+  mongo_root_password:
+    file: ./secrets/mongo_root_password.txt
