@@ -61,8 +61,8 @@ def prepare_configs():
     )
 
     frontend_config = (
-        "REACT_APP_API_URL=http://backend:555\n"
-        # "REACT_APP_API_URL=/api\n"
+        # "REACT_APP_API_URL=http://backend:555\n"
+        "REACT_APP_API_URL=/api\n"
     )
 
     return {
