@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: todos-backend
     expose:
+      - "555"
+    ports:
       - "555:555"
     env_file:
       - backend/.env
@@ -31,6 +33,8 @@ services:
       dockerfile: Dockerfile
     container_name: todos-frontend
     expose:
+      - "80"
+    ports:
       - "80:80"
     env_file:
       - frontend/.env
