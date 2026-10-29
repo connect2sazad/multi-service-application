@@ -34,8 +34,6 @@ services:
     container_name: todos-frontend
     expose:
       - "80"
-    ports:
-      - "80:80"
     env_file:
       - frontend/.env
     depends_on:
