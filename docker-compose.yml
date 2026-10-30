@@ -35,6 +35,11 @@ services:
     restart: unless-stopped
     networks:
       - todos-network
+    logging: &default-logging
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build:
@@ -57,6 +62,7 @@ services:
     restart: unless-stopped
     networks:
       - todos-network
+    logging: *default-logging
 
   nginx:
     image: nginx:alpine
@@ -73,6 +79,7 @@ services:
     restart: unless-stopped
     networks:
       - todos-network
+    logging: *default-logging
 
   redis:
     image: redis:7-alpine
@@ -88,6 +95,7 @@ services:
     restart: unless-stopped
     networks:
       - todos-network
+    logging: *default-logging
 
   mongodb:
     image: mongo:7
@@ -104,7 +112,7 @@ services:
       test:
         - CMD-SHELL
         - >
-        - mongosh --quiet
+          mongosh --quiet
           --username "$${cat /run/secrets/mongo_root_username}"
           --password "$${cat /run/secrets/mongo_root_password}"
           --authenticationDatabase admin
@@ -117,6 +125,7 @@ services:
     restart: unless-stopped
     networks:
       - todos-network
+    logging: *default-logging
 
 volumes:
   mongo_data:
