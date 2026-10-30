@@ -106,9 +106,9 @@ services:
         - mongosh
         - --quiet
         - --username
-        - ${MONGO_INITDB_ROOT_USERNAME}
+        - "$${cat /run/secrets/mongo_root_username}"
         - --password
-        - ${MONGO_INITDB_ROOT_PASSWORD}
+        - "$${cat /run/secrets/mongo_root_password}"
         - --authenticationDatabase
         - admin
         - --eval
