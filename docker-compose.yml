@@ -127,6 +127,7 @@ volumes:
 
 networks:
   todos-network:
+    name: todos-network
     driver: bridge
 
 secrets:
