@@ -102,17 +102,14 @@ services:
       - mongo_data:/data/db
     healthcheck:
       test:
-        - CMD
-        - mongosh
-        - --quiet
-        - --username
-        - "$${cat /run/secrets/mongo_root_username}"
-        - --password
-        - "$${cat /run/secrets/mongo_root_password}"
-        - --authenticationDatabase
-        - admin
-        - --eval
-        - "db.adminCommand('ping').ok"
+        - CMD-SHELL
+        - >
+        - mongosh --quiet
+          --username "$${cat /run/secrets/mongo_root_username}"
+          --password "$${cat /run/secrets/mongo_root_password}"
+          --authenticationDatabase admin
+          --eval "db.adminCommand('ping').ok"
+          | grep -q 1
       interval: 10s
       timeout: 5s
       retries: 5
