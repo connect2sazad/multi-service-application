@@ -92,6 +92,9 @@ def create_env():
     write_private_file(MONGO_USERNAME_FILE, mongo_user)
     write_private_file(MONGO_PASSWORD_FILE, mongo_password)
 
+    MONGO_USERNAME_FILE.chmod(0o644)
+    MONGO_PASSWORD_FILE.chmod(0o644)
+
     # Write only non-secret configuration to .env files.
     write_config_file(
         ROOT_ENV,
